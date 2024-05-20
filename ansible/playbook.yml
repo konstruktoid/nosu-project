@@ -1,0 +1,85 @@
+---
+- name: Harden and run a web server in a Podman container
+  hosts: localhost
+  become_method: community.general.run0
+  vars:
+    container_user: container-nginx
+    sshd_admin_net:
+      - "0.0.0.0/0"
+    sshd_allow_groups:
+      - wheel
+    sshd_login_grace_time: 60
+    sshd_max_auth_tries: 10
+    sshd_use_dns: false
+    sshd_update_moduli: true
+  tasks:
+    - name: System setup
+      become: true
+      block:
+        - name: Install Podman
+          ansible.builtin.apt:
+            name: "{{ item }}"
+            state: present
+            update_cache: true
+          loop:
+            - podman
+            - slirp4netns
+            - uidmap
+
+        - name: Add the container user
+          ansible.builtin.user:
+            name: "{{ container_user }}"
+            comment: Container User
+            password: "!"
+            state: present
+            shell: /bin/bash
+
+        - name: Enable lingering for the container user
+          ansible.builtin.command:
+            cmd: loginctl enable-linger {{ container_user }}
+            creates: /var/lib/systemd/linger/{{ container_user }}
+          register: enable_lingering
+          changed_when: enable_lingering.rc != 0
+          failed_when: enable_lingering.rc != 0
+
+    - name: Import the hardening role
+      ansible.builtin.import_role:
+        name: konstruktoid.hardening
+
+    - name: Podman quadlet
+      become: true
+      become_user: "{{ container_user }}"
+      block:
+        - name: Web server container
+          containers.podman.podman_container:
+            name: nginx
+            image: docker.io/konstruktoid/nginx
+            state: quadlet
+            ports:
+              - 8080:80
+            cap_drop: all
+            capabilities:
+              - chown
+              - dac_override
+              - net_bind_service
+              - setgid
+              - setuid
+            hostname: "{{ ansible_nodename }}"
+            quadlet_options:
+              - AutoUpdate=registry
+              - Pull=newer
+              - |
+                [Install]
+                WantedBy=default.target
+
+        - name: Reread configuration
+          ansible.builtin.systemd_service:
+            daemon_reload: true
+            scope: user
+
+        - name: Enable and start the container service
+          ansible.builtin.systemd_service:
+            name: nginx
+            enabled: true
+            state: started
+            scope: user
