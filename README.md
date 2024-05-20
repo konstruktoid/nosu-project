@@ -1,7 +1,7 @@
-# NoSU - an Ubuntu system without su* binaries or SUID/SGID files
+# NoSU - an Ubuntu system without sudo binaries and fewer SUID/SGID files
 
-NoSU is a system that has been stripped of all `sudo` binaries and SUID/SGID
-file permissions.
+NoSU is a system that has been stripped of all `sudo` binaries and will try to
+remove as many SUID/SGID file permissions as possible.
 
 The system is based on Ubuntu 24.04, and uses `run0` and `polkit` rules instead.
 
