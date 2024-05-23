@@ -2,7 +2,7 @@
 
 set -eux
 
-RELEASE="256-rc2"
+RELEASE="256-rc3"
 URI="https://github.com/systemd/systemd/archive/refs/tags/v${RELEASE}.tar.gz"
 BUILD_DIR="/tmp/build-systemd-v${RELEASE}"
 INSTALLED_RELEASE="$(systemctl --version | head -n 1 | awk '{print $2}')"
