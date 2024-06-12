@@ -2,16 +2,20 @@
 
 set -eux
 
-RELEASE="256-rc4"
+RELEASE="256"
 URI="https://github.com/systemd/systemd/archive/refs/tags/v${RELEASE}.tar.gz"
 BUILD_DIR="/tmp/build-systemd-v${RELEASE}"
 INSTALLED_RELEASE="$(systemctl --version | head -n 1 | awk '{print $2}')"
 
-if [ "$(echo "${INSTALLED_RELEASE}" | cut -c -3)" -ge "$(echo "${RELEASE}" | cut -c -3)" ]; then
+if [ "$(echo -n "${INSTALLED_RELEASE}" | cut -c -3)" -ge "$(echo -n "${RELEASE}" | cut -c -3)" ]; then
   echo "Installed systemd is already at version 256 or later."
-  if [ "$(echo "${INSTALLED_RELEASE}" | cut -c 7-)" -ge "$(echo "${RELEASE}" | cut -c 7-)" ]; then
-    echo "Installed systemd is already at version ${RELEASE} or later."
-    exit 0
+  if echo -n "${INSTALLED_RELEASE}" | grep -q "rc"; then
+    if [ "$(echo -n "${RELEASE}" | wc -c)" -gt "3" ]; then
+      if [ "$(echo -n "${INSTALLED_RELEASE}" | cut -c 7-)" -ge "$(echo -n "${RELEASE}" | cut -c 7-)" ]; then
+        echo "Installed systemd is already at version ${RELEASE} or later."
+        exit 0
+      fi
+    fi
   fi
 fi
 
