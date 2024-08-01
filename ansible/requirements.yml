@@ -2,7 +2,7 @@
 collections:
   - name: containers.podman
     source: https://github.com/containers/ansible-podman-collections.git
-    version: 1.15.3
+    version: 1.15.4
     type: git
 
   - name: community.general
