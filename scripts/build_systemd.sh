@@ -2,7 +2,7 @@
 
 set -eux
 
-RELEASE="256"
+RELEASE="256.4"
 URI="https://github.com/systemd/systemd/archive/refs/tags/v${RELEASE}.tar.gz"
 BUILD_DIR="/tmp/build-systemd-v${RELEASE}"
 INSTALLED_RELEASE="$(systemctl --version | head -n 1 | awk '{print $2}')"
@@ -51,7 +51,9 @@ wget --no-clobber "${URI}"
 tar -xzvf "v${RELEASE}.tar.gz"
 cd "systemd-${RELEASE}"
 
-sudo chmod 0755 /tmp/user/ # https://github.com/systemd/systemd/issues/33006
+if [ -d "/tmp/user" ]; then
+  sudo chmod 0755 /tmp/user/ # https://github.com/systemd/systemd/issues/33006
+fi
 
 meson setup build
 ninja -C build
