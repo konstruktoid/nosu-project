@@ -72,14 +72,10 @@
                 [Install]
                 WantedBy=default.target
 
-        - name: Reread configuration
-          ansible.builtin.systemd_service:
-            daemon_reload: true
-            scope: user
-
         - name: Enable and start the container service
           ansible.builtin.systemd_service:
             name: nginx
             enabled: true
             state: started
             scope: user
+            daemon_reload: true
