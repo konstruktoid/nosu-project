@@ -12,7 +12,7 @@ The system is based on Ubuntu 24.04, and uses `run0` and `polkit` rules instead.
 
 - [Vagrant](https://www.vagrantup.com/)
 - [systemd v256](https://github.com/systemd/systemd) or later.
-- Ansible [community.general 9.0.0](https://github.com/ansible-collections/community.general)
+- Ansible [community.general 10.2.0](https://github.com/ansible-collections/community.general)
   or later.
 
 ## `run0`
@@ -25,14 +25,12 @@ for more information.
 
 - Start the VM: `vagrant up`.
 - SSH into the VM: `vagrant ssh`.
-- Add a `deb-src` `/etc/apt/sources.list.d/ubuntu.sources`:
-  `sudo sed -i 's/Types: deb.*/Types: deb deb-src/' /etc/apt/sources.list.d/ubuntu.sources`
-- Build `systemd v256` if it's not already installed:
+- Build the latest release of `systemd` if it's not already installed:
   `bash /vagrant/scripts/build_systemd.sh`.
 - Create an initial privileged `polkit` rule:
   `sudo bash /vagrant/scripts/privileged_polkit_rule.sh`.
 
-  This script will create the `wheel` group and add the `vagrant` user to it.
+  The script will create the `wheel` group and add the `vagrant` user to it.
   The `polkit` rule will allow member `vagrant` of the `wheel` group to run any command
   without authentication.
 
