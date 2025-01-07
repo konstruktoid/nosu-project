@@ -3,7 +3,7 @@
 set -eux
 
 # shellcheck disable=SC2289
-echo'Package: sudo
+echo 'Package: sudo
 Pin: release *
 Pin-Priority: -10
 
