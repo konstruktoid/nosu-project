@@ -1,4 +1,4 @@
-# NoSU - an Ubuntu system without sudo binaries and fewer SUID/SGID files
+# NoSU - an Ubuntu system without sudo binaries
 
 NoSU is a system that has been stripped of all `sudo` binaries and will try to
 remove as many SUID/SGID file permissions as possible.
@@ -20,6 +20,11 @@ The system is based on Ubuntu 24.04, and uses `run0` and `polkit` rules instead.
 See [this thread from @poettering](https://mastodon.social/@pid_eins/112353324518585654)
 and the [systemd changelog](https://github.com/systemd/systemd/releases/)
 for more information.
+
+## `systemd-creds`
+
+See [System and Service Credentials](https://systemd.io/CREDENTIALS/) for more
+information.
 
 ## Setup
 
@@ -43,6 +48,9 @@ for more information.
 
 ## Usage: Using `run0` as a `become_method` in Ansible
 
+Note that systemd v258 or later is required if you want to use encrypted
+credentials in an user context.
+
 - Install Ansible:
 
   ```sh
@@ -56,7 +64,9 @@ for more information.
   `become_method: community.general.run0`
 
   And as a test, we'll run an playbook that will start a web server as a
-  Podman quadlet after the system has been [additionaly hardened](https://github.com/konstruktoid/ansible-role-hardening).
+  Podman quadlet after the system has been [additionaly hardened](https://github.com/konstruktoid/ansible-role-hardening),
+  the quadlet also uses the [systemd-creds encrypt module](https://docs.ansible.com/ansible/latest/collections/community/general/systemd_creds_encrypt_module.html)
+  in an user context.
 
   ```sh
    ansible-galaxy install --force -r /vagrant/ansible/requirements.yml

@@ -1,9 +1,15 @@
 ---
-- name: Harden and run a web server in a Podman container
+# Requires systemd >= 258 and Ansible community.general >= 10.2.0
+# https://docs.ansible.com/ansible/latest/collections/community/general/run0_become.html
+# https://docs.ansible.com/ansible/latest/collections/community/general/systemd_creds_encrypt_module.html
+- name: Using run0 to run a Podman quadlet with encrypted systemd-creds
   hosts: localhost
   become_method: community.general.run0
   vars:
+    ansible_python_interpreter: /usr/bin/python3
     container_user: container-nginx
+    container_secret: should_be_a_lookup_from_vault
+    # konstruktoid.hardening variables
     sshd_admin_net:
       - "0.0.0.0/0"
     sshd_allow_groups:
@@ -15,6 +21,8 @@
   tasks:
     - name: System setup
       become: true
+      tags:
+        - pre
       block:
         - name: Install Podman
           ansible.builtin.apt:
@@ -45,11 +53,47 @@
     - name: Import the hardening role
       ansible.builtin.import_role:
         name: konstruktoid.hardening
+      tags:
+        - hardening
 
     - name: Podman quadlet
       become: true
       become_user: "{{ container_user }}"
+      tags:
+        - podman
       block:
+        - name: Register container user info
+          ansible.builtin.user:
+            name: "{{ container_user }}"
+          check_mode: true
+          register: container_user_info
+
+        - name: Write a basic Nginx configuration file
+          ansible.builtin.blockinfile:
+            path: "{{ container_user_info.home }}/nginx.conf"
+            mode: "0600"
+            create: true
+            owner: "{{ container_user }}"
+            group: "{{ container_user }}"
+            block: |
+              server {
+                listen 80;
+                server_name _;
+                location / {
+                  root /usr/share/nginx/;
+                  index index.html;
+                }
+              }
+
+        - name: Encrypt secret
+          community.general.systemd_creds_encrypt:
+            name: web
+            not_after: +30d
+            pretty: true
+            secret: "{{ container_secret }}"
+            user: "{{ container_user }}"
+          register: encrypted_secret
+
         - name: Web server container
           containers.podman.podman_container:
             name: nginx
@@ -65,10 +109,15 @@
               - setgid
               - setuid
             hostname: "{{ ansible_nodename }}"
+            volumes:
+              - "{{ container_user_info.home }}/nginx.conf:/etc/nginx/http.d/default.conf"
+              - "/run/user/{{ container_user_info.uid }}/credentials/nginx.service/web:/var/tmp/web"
             quadlet_options:
               - AutoUpdate=registry
               - Pull=newer
               - |
+                [Service]
+                {{ encrypted_secret.value }}
                 [Install]
                 WantedBy=default.target
 
@@ -79,3 +128,15 @@
             state: started
             scope: user
             daemon_reload: true
+
+        - name: Print the secret on the index page
+          containers.podman.podman_container_exec:
+            name: nginx
+            argv:
+              - /bin/sh
+              - -c
+              - echo -e "The secret is:\n $(cat /var/tmp/web)\n" | tee /usr/share/nginx/index.html
+
+        - name: Inform about the secret
+          ansible.builtin.debug:
+            msg: "Run curl http://localhost:8080 to see the secret"
