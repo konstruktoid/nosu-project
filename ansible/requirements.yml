@@ -7,7 +7,7 @@ collections:
 
   - name: community.general
     source: https://github.com/ansible-collections/community.general.git
-    version: 11.1.2
+    version: 11.2.0
     type: git
 
 roles:
