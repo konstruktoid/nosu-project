@@ -9,8 +9,3 @@ collections:
     source: https://github.com/ansible-collections/community.general.git
     version: 11.3.0
     type: git
-
-roles:
-  - name: konstruktoid.hardening
-    src: https://github.com/konstruktoid/ansible-role-hardening.git
-    scm: git

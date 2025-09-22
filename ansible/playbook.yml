@@ -9,15 +9,6 @@
     ansible_python_interpreter: /usr/bin/python3
     container_user: container-nginx
     container_secret: should_be_a_lookup_from_vault
-    # konstruktoid.hardening variables
-    sshd_admin_net:
-      - "0.0.0.0/0"
-    sshd_allow_groups:
-      - wheel
-    sshd_login_grace_time: 60
-    sshd_max_auth_tries: 10
-    sshd_use_dns: false
-    sshd_update_moduli: true
   tasks:
     - name: System setup
       become: true
@@ -49,12 +40,6 @@
           register: enable_lingering
           changed_when: enable_lingering.rc != 0
           failed_when: enable_lingering.rc != 0
-
-    - name: Import the hardening role
-      ansible.builtin.import_role:
-        name: konstruktoid.hardening
-      tags:
-        - hardening
 
     - name: Podman quadlet
       become: true

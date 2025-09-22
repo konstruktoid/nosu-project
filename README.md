@@ -54,10 +54,11 @@ credentials in an user context.
 - Install Ansible:
 
   ```sh
-  run0 apt-get install --assume-yes python3-pip python3-venv
-  python3 -m venv ansible
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+  source $HOME/.local/bin/env
+  uv venv -p3.12 ansible
   source ansible/bin/activate
-  python3 -m pip install ansible
+  uv pip install ansible
   ```
 
 - The `run0` module is used as a `become_method` in the example playbook:
@@ -70,7 +71,7 @@ credentials in an user context.
 
   ```sh
    ansible-galaxy install --force -r /vagrant/ansible/requirements.yml
-   ansible-playbook -v -i '127.0.0.1,' -c local --skip-tags sudo /vagrant/ansible/playbook.yml
+   ansible-playbook -v -i 'localhost,' -c local /vagrant/ansible/playbook.yml
   ```
 
   Verify that the web server is running:
