@@ -38,9 +38,11 @@ sudo sed -i s/'^Types: deb$/Types: deb deb-src/g' /etc/apt/sources.list.d/ubuntu
 
 sudo apt-get update
 sudo apt-get --assume-yes build-dep systemd
-sudo apt-get --assume-yes install python3-pip python3-venv unzip --no-install-recommends
+sudo apt-get --assume-yes install unzip --no-install-recommends
 
-python3 -m venv "${BUILD_DIR}"
+curl -LsSf https://astral.sh/uv/install.sh | sh
+source "${HOME}/.local/bin/env"
+uv venv -p3.12 "${BUILD_DIR}"
 
 if [ -f "${BUILD_DIR}/bin/activate" ]; then
   source "${BUILD_DIR}/bin/activate"
@@ -51,9 +53,9 @@ fi
 
 if [ -x "$(which meson)" ]; then
   MESON_VERSION=$(meson --version)
-  python3 -m pip install -U pip jinja2 "meson==${MESON_VERSION}" ninja
+  uv pip install -U pip jinja2 "meson==${MESON_VERSION}" ninja
 else
-  python3 -m pip install -U pip jinja2 meson ninja
+  uv pip install -U pip jinja2 meson ninja
 fi
 
 
