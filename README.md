@@ -65,8 +65,7 @@ credentials in an user context.
   `become_method: community.general.run0`
 
   And as a test, we'll run an playbook that will start a web server as a
-  Podman quadlet after the system has been [additionaly hardened](https://github.com/konstruktoid/ansible-role-hardening),
-  the quadlet also uses the [systemd-creds encrypt module](https://docs.ansible.com/ansible/latest/collections/community/general/systemd_creds_encrypt_module.html)
+  Podman quadlet, the quadlet also uses the [systemd-creds encrypt module](https://docs.ansible.com/ansible/latest/collections/community/general/systemd_creds_encrypt_module.html)
   in an user context.
 
   ```sh
