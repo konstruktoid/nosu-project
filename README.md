@@ -1,9 +1,10 @@
 # NoSU - an Ubuntu system without sudo binaries
 
 NoSU is a system that has been stripped of all `sudo` binaries and will try to
-remove as many SUID/SGID file permissions as possible.
+confine as many applications as possible using `apparmor` and limit user actions
+with `polkit` rules. The system uses `run0` as a replacement for `sudo`.
 
-The system is based on Ubuntu 24.04, and uses `run0` and `polkit` rules instead.
+The system is based on Ubuntu 26.04.
 
 > **Note**
 > This is a concept project, work in progess and not intended for production use.
@@ -12,8 +13,9 @@ The system is based on Ubuntu 24.04, and uses `run0` and `polkit` rules instead.
 
 - [Vagrant](https://www.vagrantup.com/)
 - [systemd v256](https://github.com/systemd/systemd) or later.
+- [polkit 127](https://github.com/polkit-org/polkit) or later.
 - Ansible [community.general 10.2.0](https://github.com/ansible-collections/community.general)
-  or later.
+  or later if you want to use `run0` as a `become_method` in Ansible.
 
 ## `run0`
 
@@ -31,35 +33,42 @@ information.
 - Start the VM: `vagrant up`.
 - SSH into the VM: `vagrant ssh`.
 - Build the latest release of `systemd` if it's not already installed:
-  `bash /vagrant/scripts/build_systemd.sh`.
+  `/vagrant/scripts/build_systemd.sh`.
+- Build the latest release of `polkit` if it's not already installed:
+  `/vagrant/scripts/build_polkit.sh`.
 - Create an initial privileged `polkit` rule:
-  `sudo bash /vagrant/scripts/privileged_polkit_rule.sh`.
+  `sudo /vagrant/scripts/privileged_polkit_rule.sh`.
 
   The script will create the `wheel` group and add the `vagrant` user to it.
   The `polkit` rule will allow member `vagrant` of the `wheel` group to run any command
   without authentication.
 
-- Exit and reboot the VM: `vagrant reload`
+- Exit and reboot the VM using `vagrant reload`.
 - After the reboot, SSH into the VM again and verify that the system is running
-  `systemd v256` or later: `systemd --version`
+  `systemd v256` or later with `systemd --version` and that `polkit` is running
+  the latest version with `pkaction --version`.
 - Remove the `sudo`, related packages and set `apt` preferences so that `sudo`
-  can't be installed again: `run0 bash /vagrant/scripts/remove_sudo.sh`.
+  can't be installed again: `run0 /vagrant/scripts/remove_sudo.sh`.
   `sudo` will now only be a symlink to `run0`.
+  `pkexec` will have the suid bit removed and will be owned by root,
+  so it can't be used to gain root privileges.
+- Ensure `apparmor` and `auditd` is installed, configured and enabled
+  by running `run0 /vagrant/scripts/configure_apparmor.sh`.
+- Exit and reboot the VM again using `vagrant reload`.
+- After the reboot, SSH into the VM again and verify that `sudo` is no longer
+  available (`ls -l "$(which sudo)"` and `sudo --version`) and verify apparmor status
+  (`aa-status`).
 
 ## Usage: Using `run0` as a `become_method` in Ansible
 
 Note that systemd v258 or later is required if you want to use encrypted
 credentials in an user context.
 
-- Install Ansible:
-
-  ```sh
-  curl -LsSf https://astral.sh/uv/install.sh | sh
-  source $HOME/.local/bin/env
-  uv venv -p3.12 ansible
-  source ansible/bin/activate
-  uv pip install ansible
-  ```
+```sh
+uv venv "${HOME}/ansible-venv"
+source "${HOME}/ansible-venv/bin/activate"
+uv pip install ansible
+```
 
 - The `run0` module is used as a `become_method` in the example playbook:
   `become_method: community.general.run0`
@@ -70,7 +79,7 @@ credentials in an user context.
 
   ```sh
    ansible-galaxy install --force -r /vagrant/ansible/requirements.yml
-   ansible-playbook -v -i 'localhost,' -c local /vagrant/ansible/playbook.yml
+   ansible-playbook -i 'localhost,' -c local /vagrant/ansible/playbook.yml
   ```
 
   Verify that the web server is running:
