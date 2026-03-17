@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # This script creates a polkit rule that allows users in the wheel group
-# to execute commands using run0 without authentication.
+# to execute commands using run0.
 
 set -eux
 
@@ -21,6 +21,6 @@ polkit.addRule(function(action, subject) {
   if(action.id == "org.freedesktop.systemd1.manage-units" &&
     subject.isInGroup("wheel") &&
     subject.user == "vagrant") {
-    return polkit.Result.YES;
+      return polkit.Result.YES;
   }
-});' | tee /etc/polkit-1/rules.d/60-run0-fast-user-auth.rules
+});' | tee /etc/polkit-1/rules.d/60-run0-user-auth.rules
