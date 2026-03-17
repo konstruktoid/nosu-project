@@ -6,7 +6,7 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.define "nosu" do |nosu|
-    nosu.vm.box = "bento/ubuntu-24.04"
+    nosu.vm.box = "konstruktoid/ubuntu-26.04"
     nosu.ssh.insert_key = true
     nosu.vm.hostname = "nosu"
     nosu.vm.boot_timeout = 600

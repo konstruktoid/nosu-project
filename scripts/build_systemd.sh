@@ -2,7 +2,7 @@
 
 set -eux
 
-RELEASE="head" # head, latest or version number
+RELEASE="latest" # head, latest or version number
 INSTALLED_RELEASE="$(systemctl --version | head -n 1 | awk '{print $2}')"
 BUILD_DIR="/tmp/build-systemd-${RELEASE}"
 
@@ -36,13 +36,13 @@ Building systemd version ${RELEASE}.
 
 sudo sed -i s/'^Types: deb$/Types: deb deb-src/g' /etc/apt/sources.list.d/ubuntu.sources
 
-sudo apt-get update
-sudo apt-get --assume-yes build-dep systemd
-sudo apt-get --assume-yes install unzip --no-install-recommends
+sudo apt-get upgrade --assume-yes --update
+sudo apt-get build-dep --assume-yes systemd
+sudo apt-get install --assume-yes --no-install-recommends unzip
 
 curl -LsSf https://astral.sh/uv/install.sh | sh
 source "${HOME}/.local/bin/env"
-uv venv -p3.12 "${BUILD_DIR}"
+uv venv "${BUILD_DIR}"
 
 if [ -f "${BUILD_DIR}/bin/activate" ]; then
   source "${BUILD_DIR}/bin/activate"
@@ -51,13 +51,7 @@ else
   exit 1
 fi
 
-if [ -x "$(which meson)" ]; then
-  MESON_VERSION=$(meson --version)
-  uv pip install -U pip jinja2 "meson==${MESON_VERSION}" ninja
-else
-  uv pip install -U pip jinja2 meson ninja
-fi
-
+uv pip install -U pip jinja2 meson ninja
 
 cd "${BUILD_DIR}" || exit 1
 wget --no-clobber "${URI}"
@@ -76,5 +70,5 @@ fi
 
 meson setup build
 ninja -C build
-meson test -C build
+sudo meson test -C build
 sudo meson install -C build/ --no-rebuild
